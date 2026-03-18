@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.venv/
+build/
+dist/
+*.egg-info/
+
+# Game binaries (do not commit)
+game/
+
+# Benchmark outputs
+runs/
