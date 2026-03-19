@@ -1,7 +1,7 @@
 """Convenience API for MiniRTS Bench."""
 
-from polytopia_bench.benchmark import RunConfig, run_benchmark
-from polytopia_bench.game_api import GameAPI, MiniRTSGameAPI
+from mirts_bench.benchmark import RunConfig, run_benchmark
+from mirts_bench.game_api import GameAPI, MiniRTSGameAPI
 
 
 def configure_llm(host=None, model=None, api_key=None, provider="openai"):
