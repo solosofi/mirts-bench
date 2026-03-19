@@ -3,6 +3,7 @@ __pycache__/
 .venv/
 build/
 dist/
+dist_new/
 *.egg-info/
 
 # Game binaries (do not commit)
