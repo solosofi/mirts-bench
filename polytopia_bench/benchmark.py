@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional
 
 from .elo import update_elo
 from .game_api import UIAutomationGameAPI
-from .llm import CommandLLM, HttpLLM, MockLLM
+from .llm import CommandLLM, HttpLLM, KaggleBridgeLLM, MockLLM
 from .prompt import render_prompt
 from .schema import parse_action, validate_state
 
@@ -20,6 +20,7 @@ class RunConfig:
     games: int = 1
     calibration_path: str = "calibration.json"
     llm_cmd: Optional[List[str]] = None
+    llm_provider: str = "openai"
     llm_host: Optional[str] = None
     llm_model: Optional[str] = None
     llm_api_key: Optional[str] = None
@@ -35,6 +36,11 @@ def _create_game_api(config: RunConfig):
 def _create_llm(config: RunConfig):
     if config.llm_cmd:
         return CommandLLM(config.llm_cmd)
+    provider = (config.llm_provider or "openai").lower()
+    if provider == "kaggle":
+        if not config.llm_host:
+            raise ValueError("--llm-host is required for Kaggle bridge")
+        return KaggleBridgeLLM(config.llm_host, config.llm_model)
     if config.llm_host or config.llm_model or config.llm_api_key:
         if not config.llm_host or not config.llm_model:
             raise ValueError("--llm-host and --llm-model are required for HTTP LLM")

@@ -22,6 +22,7 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--games", type=int, default=1)
     run.add_argument("--calibration", type=str, default="calibration.json")
     run.add_argument("--llm-cmd", type=str, default=None)
+    run.add_argument("--llm-provider", type=str, choices=["openai", "kaggle"], default=None)
     run.add_argument("--llm-host", type=str, default=None)
     run.add_argument("--llm-model", type=str, default=None)
     run.add_argument("--llm-api-key", type=str, default=None)
@@ -40,6 +41,7 @@ def main() -> int:
         if args.games < 1:
             raise SystemExit("--games must be >= 1")
         llm_cmd = _parse_llm_cmd(args.llm_cmd)
+        llm_provider = args.llm_provider or os.getenv("POLYBENCH_LLM_PROVIDER")
         llm_host = args.llm_host or os.getenv("POLYBENCH_LLM_HOST")
         llm_model = args.llm_model or os.getenv("POLYBENCH_LLM_MODEL")
         llm_api_key = args.llm_api_key or os.getenv("POLYBENCH_LLM_API_KEY")
@@ -49,6 +51,7 @@ def main() -> int:
             games=args.games,
             calibration_path=args.calibration,
             llm_cmd=llm_cmd,
+            llm_provider=llm_provider or "openai",
             llm_host=llm_host,
             llm_model=llm_model,
             llm_api_key=llm_api_key,

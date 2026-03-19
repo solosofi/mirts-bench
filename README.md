@@ -84,6 +84,60 @@ $env:POLYBENCH_LLM_API_KEY = "YOUR_KEY"
 polybench run --difficulty hard --opponents 7 --games 1 --calibration calibration.json
 ```
 
+## Kaggle LLM Bridge (remote)
+
+You can run the LLM inside a Kaggle notebook and call it over HTTP from your
+Windows machine (where Polytopia + UI automation runs).
+
+### Kaggle notebook
+
+1) Open a Kaggle notebook with `kaggle-benchmarks` available.
+2) Create a cell with the bridge server:
+
+```python
+!pip -q install kaggle-benchmarks
+
+import json
+from http.server import BaseHTTPRequestHandler, HTTPServer
+import kaggle_benchmarks as kbench
+
+class Handler(BaseHTTPRequestHandler):
+    def do_POST(self):
+        if self.path != "/prompt":
+            self.send_response(404)
+            self.end_headers()
+            return
+        length = int(self.headers.get("Content-Length", "0"))
+        body = self.rfile.read(length) if length else b"{}"
+        data = json.loads(body.decode("utf-8"))
+        prompt = data.get("prompt", "")
+        model = data.get("model")
+        llm = kbench.llm if not model else kbench.llms[model]
+        response = llm.prompt(prompt)
+        payload = json.dumps({"content": response}).encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(payload)))
+        self.end_headers()
+        self.wfile.write(payload)
+
+server = HTTPServer(("0.0.0.0", 8000), Handler)
+server.serve_forever()
+```
+
+3) Expose port 8000 with a tunnel (ngrok or cloudflared) and copy the public URL.
+
+### Windows run (using Kaggle LLM)
+
+```powershell
+polybench run --difficulty hard --opponents 7 --games 1 --calibration calibration.json ^
+  --llm-provider kaggle ^
+  --llm-host https://YOUR_TUNNEL_URL ^
+  --llm-model google/gemini-2.5-flash
+```
+
+If `--llm-model` is omitted, the bridge uses Kaggle’s default `kbench.llm`.
+
 ## Python API
 
 ```python
@@ -153,6 +207,7 @@ Each run writes:
 - `--games` (default 1)
 - `--calibration` path to calibration.json
 - `--llm-cmd` external command that reads prompt on stdin and returns JSON on stdout
+- `--llm-provider` openai | kaggle
 - `--llm-host` HTTP base URL (OpenAI-compatible `/v1/chat/completions`)
 - `--llm-model` model name for HTTP LLM
 - `--llm-api-key` API key for HTTP LLM (or set `POLYBENCH_LLM_API_KEY`)
